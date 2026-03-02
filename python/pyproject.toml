@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "amp-sdk"
+version = "0.1.0"
+description = "Baseline Python SDK for AMP/1.0"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Bons_AI, LLC" }]
+license = { text = "TBD" }
+keywords = ["amp", "love-envoy", "sdk"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "License :: Other/Proprietary License",
+]
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["amp_sdk*"]

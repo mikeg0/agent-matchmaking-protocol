@@ -1,6 +1,6 @@
 # AMP/1.0 SDK — ACTION_PLAN
 
-_Last updated: 2026-03-02 (UTC)_
+_Last updated: 2026-03-02 (UTC, run 2)_
 
 ## Review Scope (this run)
 - Repo structure and implementation completeness for Python, Go, Rust, Java
@@ -26,6 +26,10 @@ _Last updated: 2026-03-02 (UTC)_
   - Implement core operations: register agent, create profile, discover, negotiate, approvals
   - Keep transport simple: HTTP/JSON + pluggable base URL
   - Ensure generated/handwritten models align with OpenAPI 0.4.0
+  - Progress:
+    - [x] Python baseline SDK (`python/amp_sdk`) with core client ops + models + unit tests
+    - [ ] Go baseline SDK
+    - [ ] Java baseline SDK
 
 - [x] **Complete Rust crate baseline (code complete; local compile still pending toolchain availability)**
   - Added missing modules (`auth`, `client`, `error`, `models`, `state_machine`)
