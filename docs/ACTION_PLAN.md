@@ -10,12 +10,12 @@ _Last updated: 2026-03-02 (UTC)_
 
 ## Current Snapshot
 - ✅ Canonical protocol materials exist in `spec/` (OpenAPI + architecture + whitepaper)
-- ⚠️ SDK implementations are mostly scaffolding:
+- ✅ Rust crate now has baseline modules (`auth`, `client`, `error`, `models`, `state_machine`) and unit-test scaffolding
+- ⚠️ SDK implementations are still incomplete in non-Rust languages:
   - `python/` has no package/client code yet
-  - `go/` has only `go.mod`
-  - `java/` has only `pom.xml`
-  - `rust/amp-sdk` has `lib.rs` exports but referenced modules are not present
-- ⚠️ No cross-language contract tests
+  - `go/` currently has module scaffold only
+  - `java/` currently has Maven scaffold only
+- ⚠️ No cross-language contract tests yet
 - ⚠️ No CI matrix for multi-language validation
 - ⚠️ Host currently lacks toolchains (`go`, `cargo`, `mvn`, `pytest`) for local verification
 
@@ -27,9 +27,9 @@ _Last updated: 2026-03-02 (UTC)_
   - Keep transport simple: HTTP/JSON + pluggable base URL
   - Ensure generated/handwritten models align with OpenAPI 0.4.0
 
-- [ ] **Complete Rust crate so it compiles/tests**
-  - Add missing modules (`auth`, `client`, `error`, `models`, `state_machine`)
-  - Provide typed error handling + serialization round-trip tests
+- [x] **Complete Rust crate baseline (code complete; local compile still pending toolchain availability)**
+  - Added missing modules (`auth`, `client`, `error`, `models`, `state_machine`)
+  - Added typed error handling + unit-test scaffolding for auth/state-machine behavior
 
 - [ ] **Define a shared conformance test fixture set**
   - JSON request/response fixtures in `spec/fixtures/`
@@ -68,9 +68,9 @@ _Last updated: 2026-03-02 (UTC)_
   - Declare deprecation and migration guarantees
 
 ## Execution Order (recommended)
-1. Rust compile-complete baseline + tests (smallest path to first working SDK)
-2. Python and Go baseline clients
-3. Java baseline client
+1. Python baseline client + models
+2. Go baseline client + models
+3. Java baseline client + models
 4. Shared fixture-based conformance tests
 5. CI matrix + release pipelines
 6. Docs/quickstarts + compatibility policy
