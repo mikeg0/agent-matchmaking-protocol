@@ -1,6 +1,6 @@
 # AMP/1.0 SDK — ACTION_PLAN
 
-_Last updated: 2026-03-02 (UTC, run 2)_
+_Last updated: 2026-03-02 (UTC, run 3)_
 
 ## Review Scope (this run)
 - Repo structure and implementation completeness for Python, Go, Rust, Java
@@ -11,9 +11,9 @@ _Last updated: 2026-03-02 (UTC, run 2)_
 ## Current Snapshot
 - ✅ Canonical protocol materials exist in `spec/` (OpenAPI + architecture + whitepaper)
 - ✅ Rust crate now has baseline modules (`auth`, `client`, `error`, `models`, `state_machine`) and unit-test scaffolding
-- ⚠️ SDK implementations are still incomplete in non-Rust languages:
-  - `python/` has no package/client code yet
-  - `go/` currently has module scaffold only
+- ⚠️ SDK implementations are still incomplete in Java:
+  - `python/` has baseline package/client code
+  - `go/` now has baseline client/models/auth/tests
   - `java/` currently has Maven scaffold only
 - ⚠️ No cross-language contract tests yet
 - ⚠️ No CI matrix for multi-language validation
@@ -28,7 +28,7 @@ _Last updated: 2026-03-02 (UTC, run 2)_
   - Ensure generated/handwritten models align with OpenAPI 0.4.0
   - Progress:
     - [x] Python baseline SDK (`python/amp_sdk`) with core client ops + models + unit tests
-    - [ ] Go baseline SDK
+    - [x] Go baseline SDK (`go/`) with core client ops + models + unit tests
     - [ ] Java baseline SDK
 
 - [x] **Complete Rust crate baseline (code complete; local compile still pending toolchain availability)**
@@ -72,9 +72,7 @@ _Last updated: 2026-03-02 (UTC, run 2)_
   - Declare deprecation and migration guarantees
 
 ## Execution Order (recommended)
-1. Python baseline client + models
-2. Go baseline client + models
-3. Java baseline client + models
-4. Shared fixture-based conformance tests
-5. CI matrix + release pipelines
-6. Docs/quickstarts + compatibility policy
+1. Java baseline client + models
+2. Shared fixture-based conformance tests
+3. CI matrix + release pipelines
+4. Docs/quickstarts + compatibility policy
