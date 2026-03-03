@@ -1,8 +1,17 @@
+import io
 import json
 import unittest
+from urllib.error import HTTPError, URLError
 from unittest.mock import patch
 
-from amp_sdk import AmpClient, CredentialsError, CreateNegotiationRequest, RegisterAgentRequest
+from amp_sdk import (
+    AmpClient,
+    CredentialsError,
+    CreateNegotiationRequest,
+    HttpStatusError,
+    RegisterAgentRequest,
+    RequestOptions,
+)
 from amp_sdk.auth import (
     build_signature_payload,
     is_timestamp_fresh,
@@ -90,6 +99,120 @@ class AmpClientTests(unittest.TestCase):
             client.create_negotiation(
                 CreateNegotiationRequest(target_opaque_id="22222222-2222-2222-2222-222222222222")
             )
+
+    @patch("amp_sdk.client.time.sleep")
+    @patch("amp_sdk.client.urlopen")
+    def test_retryable_status_retries_and_honors_idempotency_key(self, mock_urlopen, mock_sleep):
+        calls = []
+
+        def side_effect(request, timeout):
+            calls.append((request, timeout))
+            if len(calls) == 1:
+                raise HTTPError(
+                    url=request.full_url,
+                    code=503,
+                    msg="service unavailable",
+                    hdrs=None,
+                    fp=io.BytesIO(b"temporary failure"),
+                )
+            return FakeHttpResponse(
+                json.dumps(
+                    {
+                        "negotiation": {
+                            "id": "n-1",
+                            "initiator_opaque_id": "self",
+                            "target_opaque_id": "target",
+                            "state": "proposed",
+                        }
+                    }
+                )
+            )
+
+        mock_urlopen.side_effect = side_effect
+
+        client = AmpClient("https://api.example.com", api_key="le_key", hmac_secret="secret")
+        result = client.create_negotiation(
+            CreateNegotiationRequest(target_opaque_id="target"),
+            request_options=RequestOptions(idempotency_key="idem-123", retry_backoff_seconds=0.0),
+        )
+
+        self.assertEqual(result.id, "n-1")
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(calls[0][0].headers.get("Idempotency-key"), "idem-123")
+        mock_sleep.assert_not_called()
+
+    @patch("amp_sdk.client.urlopen")
+    def test_non_retryable_status_does_not_retry(self, mock_urlopen):
+        mock_urlopen.side_effect = HTTPError(
+            url="https://api.example.com/api/v1/agents/register",
+            code=400,
+            msg="bad request",
+            hdrs=None,
+            fp=io.BytesIO(b"bad request"),
+        )
+
+        client = AmpClient("https://api.example.com")
+
+        with self.assertRaises(HttpStatusError) as raised:
+            client.register_agent(RegisterAgentRequest(name="astra"))
+
+        self.assertEqual(raised.exception.status_code, 400)
+        self.assertEqual(mock_urlopen.call_count, 1)
+
+    @patch("amp_sdk.client.urlopen")
+    def test_per_request_timeout_override(self, mock_urlopen):
+        observed_timeouts = []
+
+        def side_effect(request, timeout):
+            observed_timeouts.append(timeout)
+            return FakeHttpResponse(
+                json.dumps(
+                    {
+                        "agent_id": "11111111-1111-1111-1111-111111111111",
+                        "api_key": "le_test",
+                        "status": "pending_human_verify",
+                    }
+                )
+            )
+
+        mock_urlopen.side_effect = side_effect
+        client = AmpClient("https://api.example.com", timeout_seconds=30.0)
+
+        client.register_agent(
+            RegisterAgentRequest(name="astra"),
+            request_options=RequestOptions(timeout_seconds=5.5),
+        )
+
+        self.assertEqual(observed_timeouts, [5.5])
+
+    @patch("amp_sdk.client.time.sleep")
+    @patch("amp_sdk.client.urlopen")
+    def test_network_error_retries_then_succeeds(self, mock_urlopen, mock_sleep):
+        calls = 0
+
+        def side_effect(request, timeout):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                raise URLError("dns failure")
+            return FakeHttpResponse(
+                json.dumps(
+                    {
+                        "agent_id": "11111111-1111-1111-1111-111111111111",
+                        "api_key": "le_test",
+                        "status": "pending_human_verify",
+                    }
+                )
+            )
+
+        mock_urlopen.side_effect = side_effect
+
+        client = AmpClient("https://api.example.com", max_retries=1, retry_backoff_seconds=0.01)
+        result = client.register_agent(RegisterAgentRequest(name="astra"))
+
+        self.assertEqual(result.api_key, "le_test")
+        self.assertEqual(calls, 2)
+        mock_sleep.assert_called_once_with(0.01)
 
 
 if __name__ == "__main__":
