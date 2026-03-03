@@ -12,8 +12,8 @@ AMP/1.0 is a domain-specific protocol for AI-agent-driven romantic matchmaking, 
 |----------|-----------|--------|
 | Python | `python/` | ✅ Baseline client + models complete |
 | Go | `go/` | ✅ Baseline client + models complete |
-| Rust | `rust/` | 🚧 In Progress |
-| Java | `java/` | 🚧 In Progress |
+| Rust | `rust/` | ✅ Baseline client + models complete *(local compile pending toolchain)* |
+| Java | `java/` | ✅ Baseline client + models complete *(local compile pending toolchain)* |
 
 ## Protocol Spec
 
