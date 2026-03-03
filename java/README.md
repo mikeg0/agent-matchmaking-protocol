@@ -8,6 +8,7 @@ Baseline AMP/1.0 Java SDK covering the core flow from `docs/ACTION_PLAN.md`:
 - create negotiation
 - check approval status
 - approve/reject negotiation
+- configurable retry/timeout defaults with per-request `RequestOptions` overrides
 
 ## Build + test
 
@@ -19,6 +20,9 @@ mvn test
 
 ```java
 import com.bonsai.amp.sdk.AmpClient;
+import com.bonsai.amp.sdk.RequestOptions;
+import java.time.Duration;
+import java.util.Set;
 
 public class Example {
   public static void main(String[] args) {
@@ -28,7 +32,15 @@ public class Example {
         "hmac_secret"
     );
 
-    var discover = client.discover(1, 20);
+    RequestOptions options = new RequestOptions(
+        Duration.ofSeconds(5),
+        1,
+        Duration.ofMillis(50),
+        Set.of(429, 503),
+        "discover-page-1"
+    );
+
+    var discover = client.discover(1, 20, options);
     System.out.println("candidates=" + discover.candidates().size());
   }
 }

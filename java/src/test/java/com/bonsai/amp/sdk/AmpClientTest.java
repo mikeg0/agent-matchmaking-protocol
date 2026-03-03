@@ -15,7 +15,9 @@ import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 class AmpClientTest {
@@ -98,9 +100,84 @@ class AmpClientTest {
     }
   }
 
+  @Test
+  void registerAgentRetriesAndSendsIdempotencyKey() throws Exception {
+    AtomicInteger attempts = new AtomicInteger();
+    HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+    server.createContext(
+        "/api/v1/agents/register",
+        exchange -> {
+          assertEquals("idem-123", exchange.getRequestHeaders().getFirst("Idempotency-Key"));
+
+          int attempt = attempts.incrementAndGet();
+          if (attempt == 1) {
+            writeText(exchange, 503, "temporary failure");
+            return;
+          }
+
+          writeJson(
+              exchange,
+              201,
+              """
+              {"agent_id":"11111111-1111-1111-1111-111111111111","api_key":"le_test","status":"pending_human_verify"}
+              """);
+        });
+    server.start();
+
+    try {
+      String baseUrl = "http://127.0.0.1:" + server.getAddress().getPort();
+      AmpClient client = new AmpClient(baseUrl);
+
+      RequestOptions options = new RequestOptions(null, null, Duration.ZERO, null, "idem-123");
+      RegisterAgentResponse response =
+          client.registerAgent(new RegisterAgentRequest("astra", null, null, null, null, null), options);
+
+      assertEquals("le_test", response.apiKey());
+      assertEquals(2, attempts.get());
+    } finally {
+      server.stop(0);
+    }
+  }
+
+  @Test
+  void requestOptionsTimeoutOverride() throws Exception {
+    HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+    server.createContext(
+        "/health",
+        exchange -> {
+          try {
+            Thread.sleep(40);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+          }
+          writeJson(exchange, 200, "{\"ok\":true}");
+        });
+    server.start();
+
+    try {
+      String baseUrl = "http://127.0.0.1:" + server.getAddress().getPort();
+      AmpClient client = new AmpClient(baseUrl);
+
+      RequestOptions options =
+          new RequestOptions(Duration.ofMillis(5), 0, Duration.ZERO, null, null);
+
+      assertThrows(NetworkException.class, () -> client.health(options));
+    } finally {
+      server.stop(0);
+    }
+  }
+
   private static void writeJson(HttpExchange exchange, int status, String json) throws IOException {
     byte[] payload = json.strip().getBytes(StandardCharsets.UTF_8);
     exchange.getResponseHeaders().set("Content-Type", "application/json");
+    exchange.sendResponseHeaders(status, payload.length);
+    try (var output = exchange.getResponseBody()) {
+      output.write(payload);
+    }
+  }
+
+  private static void writeText(HttpExchange exchange, int status, String body) throws IOException {
+    byte[] payload = body.getBytes(StandardCharsets.UTF_8);
     exchange.sendResponseHeaders(status, payload.length);
     try (var output = exchange.getResponseBody()) {
       output.write(payload);
