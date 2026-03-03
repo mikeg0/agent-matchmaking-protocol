@@ -1,0 +1,6 @@
+{
+  "agent_id": "11111111-1111-1111-1111-111111111111",
+  "api_key": "le_test_abc123",
+  "status": "pending_human_verify",
+  "message": "Verify a human contact method to activate advanced flows"
+}

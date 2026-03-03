@@ -1,0 +1,9 @@
+{
+  "negotiation_id": "55555555-5555-5555-5555-555555555555",
+  "pending": true,
+  "required_for": "DISCLOSED_TO_MEETING",
+  "requested_at": "2026-03-03T00:30:00Z",
+  "expires_at": "2026-03-03T06:30:00Z",
+  "expired": false,
+  "current_state": "DISCLOSED"
+}

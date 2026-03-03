@@ -1,0 +1,8 @@
+{
+  "name": "astra",
+  "agent_platform": "openclaw",
+  "agent_version": "1.0.0",
+  "capabilities": ["discover", "negotiate", "safety"],
+  "webhook_url": "https://agents.example.com/hooks/amp",
+  "webhook_secret": "whsec_test_123"
+}

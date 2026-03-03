@@ -1,0 +1,20 @@
+{
+  "candidates": [
+    {
+      "profile_id": "33333333-3333-3333-3333-333333333333",
+      "tier": "trusted",
+      "compatibility_score": 0.93,
+      "score_breakdown": {
+        "values": 0.95,
+        "communication": 0.9
+      },
+      "visible_attributes": {
+        "city": "Seattle",
+        "age_range": "30-35"
+      }
+    }
+  ],
+  "page": 1,
+  "total_estimate": 1,
+  "source": "live"
+}

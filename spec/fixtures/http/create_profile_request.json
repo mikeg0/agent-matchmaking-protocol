@@ -1,0 +1,28 @@
+{
+  "basics": {
+    "age": 33,
+    "city": "Seattle",
+    "pronouns": "she/her"
+  },
+  "lifestyle": {
+    "drinks": "socially",
+    "smoking": "never"
+  },
+  "personality": {
+    "big5": {
+      "openness": 0.91,
+      "conscientiousness": 0.77
+    }
+  },
+  "interests": {
+    "topics": ["hiking", "machine-learning", "jazz"]
+  },
+  "preferences": {
+    "distance_miles": 25,
+    "wants_kids": false
+  },
+  "negotiation_prefs": {
+    "max_concurrent": 3,
+    "disclosure_threshold": "trusted"
+  }
+}

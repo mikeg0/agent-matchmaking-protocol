@@ -1,6 +1,6 @@
 # AMP/1.0 SDK — ACTION_PLAN
 
-_Last updated: 2026-03-03 (UTC, run 4)_
+_Last updated: 2026-03-03 (UTC, run 5)_
 
 ## Review Scope (this run)
 - Repo structure and implementation completeness for Python, Go, Rust, Java
@@ -15,9 +15,10 @@ _Last updated: 2026-03-03 (UTC, run 4)_
   - `go/` baseline client + models + auth + unit tests
   - `rust/` baseline modules (`auth`, `client`, `error`, `models`, `state_machine`) + unit-test scaffolding
   - `java/` baseline client + models + auth + unit tests
-- ⚠️ No cross-language contract tests yet
-- ⚠️ No CI matrix for multi-language validation
-- ⚠️ Host currently lacks toolchains (`go`, `cargo`, `mvn`, `pytest`, `javac`) for local verification
+- ✅ Shared conformance fixture set now exists under `spec/fixtures/` (HTTP payload fixtures + canonical state transition cases)
+- ✅ Fixture-driven conformance tests are wired in all 4 SDK targets (`python/tests`, `go/`, `rust/amp-sdk/tests`, `java/src/test`)
+- ⚠️ No CI matrix for multi-language validation yet
+- ⚠️ Host currently lacks toolchains (`go`, `cargo`, `mvn`, `javac`) for full local verification
 
 ## Prioritized TODOs
 
@@ -32,10 +33,10 @@ _Last updated: 2026-03-03 (UTC, run 4)_
     - [x] Rust baseline SDK modules + typed error/state-machine scaffolding
     - [x] Java baseline SDK (`java/`) with core client ops + models + unit tests
 
-- [ ] **Define a shared conformance test fixture set**
-  - JSON request/response fixtures in `spec/fixtures/`
-  - State transition validity/invalidity cases from canonical state machine
-  - Run these fixtures against all SDKs
+- [x] **Define a shared conformance test fixture set**
+  - Added canonical JSON request/response fixtures in `spec/fixtures/http/`
+  - Added state transition validity/invalidity fixtures in `spec/fixtures/state/transition_cases.json`
+  - Added fixture-driven conformance test suites for Python, Go, Rust, and Java SDKs
 
 ### P1 — Security + Reliability
 - [ ] **Implement consistent auth helpers across SDKs**

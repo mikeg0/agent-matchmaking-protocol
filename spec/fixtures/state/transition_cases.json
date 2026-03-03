@@ -1,0 +1,76 @@
+{
+  "cases": [
+    {
+      "name": "progression_discovery_to_interest",
+      "from": "DISCOVERY",
+      "to": "INTEREST",
+      "pending_human_approval": false,
+      "actor_is_participant": true,
+      "valid": true
+    },
+    {
+      "name": "skip_progression_is_invalid",
+      "from": "DISCOVERY",
+      "to": "MUTUAL",
+      "pending_human_approval": false,
+      "actor_is_participant": true,
+      "valid": false
+    },
+    {
+      "name": "mutual_to_disclosing_requires_human_approval",
+      "from": "MUTUAL",
+      "to": "DISCLOSING",
+      "pending_human_approval": false,
+      "actor_is_participant": true,
+      "valid": false
+    },
+    {
+      "name": "mutual_to_disclosing_with_human_approval",
+      "from": "MUTUAL",
+      "to": "DISCLOSING",
+      "pending_human_approval": true,
+      "actor_is_participant": true,
+      "valid": true
+    },
+    {
+      "name": "disclosed_to_meeting_requires_human_approval",
+      "from": "DISCLOSED",
+      "to": "MEETING",
+      "pending_human_approval": false,
+      "actor_is_participant": true,
+      "valid": false
+    },
+    {
+      "name": "participant_can_withdraw_anytime",
+      "from": "INTEREST",
+      "to": "WITHDRAWN",
+      "pending_human_approval": false,
+      "actor_is_participant": true,
+      "valid": true
+    },
+    {
+      "name": "non_participant_cannot_withdraw",
+      "from": "INTEREST",
+      "to": "WITHDRAWN",
+      "pending_human_approval": false,
+      "actor_is_participant": false,
+      "valid": false
+    },
+    {
+      "name": "cannot_transition_from_terminal_state",
+      "from": "REJECTED",
+      "to": "WITHDRAWN",
+      "pending_human_approval": false,
+      "actor_is_participant": true,
+      "valid": false
+    },
+    {
+      "name": "direct_transition_to_blocked_requires_moderation_flow",
+      "from": "DISCOVERY",
+      "to": "BLOCKED",
+      "pending_human_approval": false,
+      "actor_is_participant": true,
+      "valid": false
+    }
+  ]
+}
