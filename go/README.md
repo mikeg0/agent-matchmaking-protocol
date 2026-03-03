@@ -51,6 +51,32 @@ Authenticated endpoints send:
 - `X-Nonce` (request-unique replay-protection token)
 - `X-Signature` (HMAC-SHA256 of `{timestamp}.{METHOD}.{path}.{sha256(body)}.{nonce}`)
 
+## Reliability knobs
+
+The client now includes retry/timeout/idempotency controls with sensible defaults:
+
+- timeout: `30s` per attempt
+- retries: `2` (for up to 3 total attempts)
+- backoff: `250ms`, exponential by attempt (`250ms`, `500ms`, ...)
+- retryable statuses: `429, 500, 502, 503, 504`
+
+Per-request overrides are available through `RequestOptions`:
+
+```go
+timeout := 5 * time.Second
+maxRetries := 0
+
+resp, err := client.RegisterAgent(
+    context.Background(),
+    ampsdk.RegisterAgentRequest{Name: "astra"},
+    ampsdk.RequestOptions{
+        Timeout:        &timeout,
+        MaxRetries:     &maxRetries,
+        IdempotencyKey: "register-agent-123",
+    },
+)
+```
+
 ## Status
 
-This is a baseline implementation intended to establish protocol parity with the Python SDK and unblock cross-language conformance work.
+This SDK now includes baseline parity with Python for retry/timeout/idempotency request hooks and fixture-driven conformance coverage.

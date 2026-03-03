@@ -1,6 +1,6 @@
 # AMP/1.0 SDK — ACTION_PLAN
 
-_Last updated: 2026-03-03 (UTC, run 7)_
+_Last updated: 2026-03-03 (UTC, run 8)_
 
 ## Review Scope (this run)
 - Repo structure and implementation completeness for Python, Go, Rust, Java
@@ -18,7 +18,7 @@ _Last updated: 2026-03-03 (UTC, run 7)_
 - ✅ Shared conformance fixture set now exists under `spec/fixtures/` (HTTP payload fixtures + canonical state transition cases)
 - ✅ Fixture-driven conformance tests are wired in all 4 SDK targets (`python/tests`, `go/`, `rust/amp-sdk/tests`, `java/src/test`)
 - ✅ Auth helper contract is now aligned across Python/Go/Rust/Java (`X-API-Key`, `X-Timestamp`, `X-Nonce`, `X-Signature`) with canonical payload parity + clock-skew timestamp helpers
-- 🟡 Python SDK now has retry/timeout/idempotency request hooks (`RequestOptions`) with retryable-status defaults and regression tests; Go/Rust/Java parity still pending
+- 🟡 Python + Go SDKs now have retry/timeout/idempotency request hooks (`RequestOptions`) with retryable-status defaults and regression tests; Rust/Java parity still pending
 - ⚠️ No CI matrix for multi-language validation yet
 - ⚠️ Host currently lacks toolchains (`go`, `cargo`, `mvn`, `javac`) for full local verification
 
@@ -54,7 +54,8 @@ _Last updated: 2026-03-03 (UTC, run 7)_
   - Progress:
     - [x] Python SDK: client-level retry defaults + per-request `RequestOptions` (timeout/retries/backoff/idempotency/retryable statuses)
     - [x] Python tests: retryable HTTP status, network retry, per-request timeout, and non-retryable status coverage
-    - [ ] Go/Rust/Java parity for retry/idempotency hooks and per-request overrides
+    - [x] Go SDK parity: client-level retry defaults + per-request `RequestOptions` (timeout/retries/backoff/idempotency/retryable statuses)
+    - [ ] Rust/Java parity for retry/idempotency hooks and per-request overrides
 
 ### P1 — Build/Release Infrastructure
 - [ ] **Set up multi-language CI matrix**

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -130,5 +131,115 @@ func TestDiscoverIncludesQueryAndAuthHeaders(t *testing.T) {
 	}
 	if resp.Page != 1 {
 		t.Fatalf("unexpected page: %d", resp.Page)
+	}
+}
+
+func TestRegisterAgentRetriesRetryableStatus(t *testing.T) {
+	t.Parallel()
+
+	var attempts int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		current := atomic.AddInt32(&attempts, 1)
+		if current <= 2 {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_, _ = w.Write([]byte("temporarily unavailable"))
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(RegisterAgentResponse{AgentID: "ok", APIKey: "k", Status: "pending_human_verify"})
+	}))
+	defer srv.Close()
+
+	client := NewClient(srv.URL, WithRetryPolicy(2, 0, []int{http.StatusServiceUnavailable}))
+	_, err := client.RegisterAgent(context.Background(), RegisterAgentRequest{Name: "astra"})
+	if err != nil {
+		t.Fatalf("register agent: %v", err)
+	}
+	if got := atomic.LoadInt32(&attempts); got != 3 {
+		t.Fatalf("expected 3 attempts, got %d", got)
+	}
+}
+
+func TestRegisterAgentRequestOptionsCanDisableRetries(t *testing.T) {
+	t.Parallel()
+
+	var attempts int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&attempts, 1)
+		w.WriteHeader(http.StatusServiceUnavailable)
+		_, _ = w.Write([]byte("temporarily unavailable"))
+	}))
+	defer srv.Close()
+
+	zero := 0
+	client := NewClient(srv.URL, WithRetryPolicy(2, 0, []int{http.StatusServiceUnavailable}))
+	_, err := client.RegisterAgent(
+		context.Background(),
+		RegisterAgentRequest{Name: "astra"},
+		RequestOptions{MaxRetries: &zero},
+	)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if got := atomic.LoadInt32(&attempts); got != 1 {
+		t.Fatalf("expected 1 attempt, got %d", got)
+	}
+}
+
+func TestRegisterAgentRequestOptionsIdempotencyKey(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got := r.Header.Get("Idempotency-Key"); got != "idem-123" {
+			t.Fatalf("expected idempotency key header, got %q", got)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(RegisterAgentResponse{AgentID: "ok", APIKey: "k", Status: "pending_human_verify"})
+	}))
+	defer srv.Close()
+
+	client := NewClient(srv.URL)
+	_, err := client.RegisterAgent(
+		context.Background(),
+		RegisterAgentRequest{Name: "astra"},
+		RequestOptions{IdempotencyKey: "idem-123"},
+	)
+	if err != nil {
+		t.Fatalf("register agent: %v", err)
+	}
+}
+
+func TestHealthRequestOptionsTimeout(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(40 * time.Millisecond)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"ok":true}`))
+	}))
+	defer srv.Close()
+
+	timeout := 5 * time.Millisecond
+	zero := 0
+	client := NewClient(srv.URL)
+	_, err := client.Health(context.Background(), RequestOptions{Timeout: &timeout, MaxRetries: &zero})
+	if err == nil {
+		t.Fatal("expected timeout error")
+	}
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("expected deadline exceeded, got: %v", err)
+	}
+}
+
+func TestRequestOptionsValidation(t *testing.T) {
+	t.Parallel()
+
+	invalidRetries := -1
+	client := NewClient("https://api.example.com")
+	_, err := client.Health(context.Background(), RequestOptions{MaxRetries: &invalidRetries})
+	if !errors.Is(err, ErrInvalidRequestOptions) {
+		t.Fatalf("expected ErrInvalidRequestOptions, got: %v", err)
 	}
 }
