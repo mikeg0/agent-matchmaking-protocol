@@ -19,6 +19,22 @@ AMP/1.0 is a domain-specific protocol for AI-agent-driven romantic matchmaking, 
 
 The canonical AMP/1.0 specification lives in `spec/`.
 
+## CI validation matrix
+
+GitHub Actions runs a multi-language matrix on push/PR:
+
+- OpenAPI drift guard: `python3 scripts/check_openapi_drift.py`
+- Python: `pytest` + `mypy`
+- Go: `go test ./...` + `go vet ./...`
+- Rust: `cargo fmt --check` + `cargo clippy` + `cargo test`
+- Java: `mvn test`
+
+Run the OpenAPI drift guard locally from repo root:
+
+```bash
+python3 scripts/check_openapi_drift.py
+```
+
 ## Reference Implementation
 
 The Love Envoy TypeScript reference server lives at: https://github.com/bons-ai/agential-dating-for-humans

@@ -1,6 +1,6 @@
 # AMP/1.0 SDK — ACTION_PLAN
 
-_Last updated: 2026-03-03 (UTC, run 9)_
+_Last updated: 2026-03-03 (UTC, run 10)_
 
 ## Review Scope (this run)
 - Repo structure and implementation completeness for Python, Go, Rust, Java
@@ -19,7 +19,7 @@ _Last updated: 2026-03-03 (UTC, run 9)_
 - ✅ Fixture-driven conformance tests are wired in all 4 SDK targets (`python/tests`, `go/`, `rust/amp-sdk/tests`, `java/src/test`)
 - ✅ Auth helper contract is now aligned across Python/Go/Rust/Java (`X-API-Key`, `X-Timestamp`, `X-Nonce`, `X-Signature`) with canonical payload parity + clock-skew timestamp helpers
 - ✅ Python/Go/Rust/Java SDKs now expose retry/timeout/idempotency request hooks (`RequestOptions`) with retryable-status defaults and per-request overrides
-- ⚠️ No CI matrix for multi-language validation yet
+- ✅ Multi-language CI matrix now validates OpenAPI drift + Python/Go/Rust/Java checks via GitHub Actions (`.github/workflows/ci.yml`)
 - ⚠️ Host currently lacks toolchains (`go`, `cargo`, `mvn`, `javac`) for full local verification
 
 ## Prioritized TODOs
@@ -59,9 +59,10 @@ _Last updated: 2026-03-03 (UTC, run 9)_
     - [x] Java SDK parity: constructor-level retry defaults + per-request `RequestOptions`, idempotency/retry loop handling, and transport regression tests
 
 ### P1 — Build/Release Infrastructure
-- [ ] **Set up multi-language CI matrix**
-  - Python (pytest + type check), Go (test/vet), Rust (fmt/clippy/test), Java (mvn test)
-  - OpenAPI drift check in CI (SDK models vs spec)
+- [x] **Set up multi-language CI matrix**
+  - Added GitHub Actions workflow at `.github/workflows/ci.yml` covering Python (`pytest` + `mypy`), Go (`go test` + `go vet`), Rust (`cargo fmt --check` + `cargo clippy` + `cargo test`), and Java (`mvn test`)
+  - Added dependency-free OpenAPI drift guard at `scripts/check_openapi_drift.py` and wired it as a required CI job before language matrix jobs
+  - Added CI usage notes in `README.md`
 
 - [ ] **Add packaging/publishing pipelines**
   - Python: PyPI package skeleton + versioning
@@ -79,7 +80,6 @@ _Last updated: 2026-03-03 (UTC, run 9)_
   - Declare deprecation and migration guarantees
 
 ## Execution Order (recommended)
-1. Shared fixture-based conformance tests
-2. CI matrix + release pipelines
-3. Auth/retry consistency passes
-4. Docs/quickstarts + compatibility policy
+1. Packaging/publishing pipelines per language
+2. Copy-paste quickstarts per language
+3. Compatibility matrix + semantic-versioning policy
