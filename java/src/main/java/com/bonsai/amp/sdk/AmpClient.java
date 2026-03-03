@@ -25,7 +25,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -152,13 +151,10 @@ public final class AmpClient {
       if (isBlank(apiKey) || isBlank(hmacSecret)) {
         throw new MissingCredentialsException();
       }
-      String timestamp = Long.toString(Instant.now().getEpochSecond());
-      String signaturePayload =
-          AuthSigner.buildSignaturePayload(timestamp, method, canonicalPath, bodyText);
-      builder
-          .header("X-API-Key", apiKey)
-          .header("X-Timestamp", timestamp)
-          .header("X-Signature", AuthSigner.sign(signaturePayload, hmacSecret));
+      var authHeaders =
+          AuthSigner.signedHeaders(
+              apiKey, hmacSecret, method, canonicalPath, bodyText, null, null);
+      authHeaders.forEach(builder::header);
     }
 
     HttpResponse<String> response;

@@ -3,8 +3,9 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use hmac::{Hmac, Mac};
-use sha2::Sha256;
+use sha2::{Digest, Sha256};
 use tokio::sync::Mutex;
+use uuid::Uuid;
 
 use crate::error::Result;
 
@@ -23,17 +24,40 @@ impl HmacSigner {
     }
 
     pub fn canonical_message(timestamp: &str, method: &str, path: &str, body: &str) -> String {
+        Self::canonical_payload(timestamp, method, path, body, "")
+    }
+
+    pub fn canonical_payload(
+        timestamp: &str,
+        method: &str,
+        path: &str,
+        body: &str,
+        nonce: &str,
+    ) -> String {
+        let body_hash = Sha256::digest(body.as_bytes());
         format!(
-            "{}\n{}\n{}\n{}",
+            "{}.{}.{}.{:x}.{}",
             timestamp,
             method.to_ascii_uppercase(),
             path,
-            body
+            body_hash,
+            nonce
         )
     }
 
     pub fn sign(&self, timestamp: &str, method: &str, path: &str, body: &str) -> String {
-        let message = Self::canonical_message(timestamp, method, path, body);
+        self.sign_with_nonce(timestamp, method, path, body, "")
+    }
+
+    pub fn sign_with_nonce(
+        &self,
+        timestamp: &str,
+        method: &str,
+        path: &str,
+        body: &str,
+        nonce: &str,
+    ) -> String {
+        let message = Self::canonical_payload(timestamp, method, path, body, nonce);
         let mut mac = HmacSha256::new_from_slice(&self.secret)
             .expect("HMAC accepts secrets of any size for SHA256");
         mac.update(message.as_bytes());
@@ -49,8 +73,43 @@ impl HmacSigner {
         body: &str,
         expected_hex: &str,
     ) -> bool {
-        let sig = self.sign(timestamp, method, path, body);
+        self.verify_with_nonce(timestamp, method, path, body, expected_hex, "")
+    }
+
+    pub fn verify_with_nonce(
+        &self,
+        timestamp: &str,
+        method: &str,
+        path: &str,
+        body: &str,
+        expected_hex: &str,
+        nonce: &str,
+    ) -> bool {
+        let sig = self.sign_with_nonce(timestamp, method, path, body, nonce);
         sig.eq_ignore_ascii_case(expected_hex)
+    }
+
+    pub fn unix_timestamp_now() -> String {
+        Utc::now().timestamp().to_string()
+    }
+
+    pub fn is_timestamp_fresh(timestamp: &str, now: DateTime<Utc>, max_skew_seconds: i64) -> bool {
+        let parsed = match timestamp.parse::<i64>() {
+            Ok(value) => value,
+            Err(_) => return false,
+        };
+
+        let skew = if max_skew_seconds <= 0 {
+            300
+        } else {
+            max_skew_seconds
+        };
+
+        (now.timestamp() - parsed).abs() <= skew
+    }
+
+    pub fn generate_nonce() -> String {
+        Uuid::new_v4().simple().to_string()
     }
 }
 
@@ -128,24 +187,54 @@ impl OAuthTokenManager {
 
 #[cfg(test)]
 mod tests {
+    use chrono::{TimeZone, Utc};
+
     use super::HmacSigner;
 
     #[test]
-    fn signs_canonical_payload_with_uppercase_method() {
+    fn signs_canonical_payload_with_nonce() {
         let signer = HmacSigner::new("secret");
-        let sig = signer.sign("1700000000", "post", "/api/v1/profiles", "{\"x\":1}");
+        let payload = HmacSigner::canonical_payload(
+            "1700000000",
+            "post",
+            "/api/v1/profiles",
+            "{\"x\":1}",
+            "nonce-123",
+        );
+
+        assert_eq!(
+            payload,
+            "1700000000.POST./api/v1/profiles.5041bf1f713df204784353e82f6a4a535931cb64f1f4b4a5aeaffcb720918b22.nonce-123"
+        );
+
+        let sig = signer.sign_with_nonce(
+            "1700000000",
+            "post",
+            "/api/v1/profiles",
+            "{\"x\":1}",
+            "nonce-123",
+        );
 
         assert_eq!(
             sig,
-            "6899569cc4765c9df3fbe6560c2f8937fb5574fad2df5381c7a8dfa040da6698"
+            "64f0f00c4f4dca1c28d74281479a433d3060c2959a3614430e78bbf10d3a53df"
         );
 
-        assert!(signer.verify(
+        assert!(signer.verify_with_nonce(
             "1700000000",
             "POST",
             "/api/v1/profiles",
             "{\"x\":1}",
-            &sig
+            &sig,
+            "nonce-123"
         ));
+    }
+
+    #[test]
+    fn timestamp_freshness_helper_respects_clock_skew() {
+        let now = Utc.timestamp_opt(1_700_000_010, 0).unwrap();
+        assert!(HmacSigner::is_timestamp_fresh("1700000005", now, 10));
+        assert!(!HmacSigner::is_timestamp_fresh("1700000000", now, 5));
+        assert!(!HmacSigner::is_timestamp_fresh("invalid", now, 10));
     }
 }

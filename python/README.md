@@ -53,7 +53,7 @@ if candidates.candidates:
 
 ## Notes
 
-- Authenticated endpoints require `X-API-Key`, `X-Timestamp`, and `X-Signature`.
+- Authenticated endpoints require `X-API-Key`, `X-Timestamp`, `X-Nonce`, and `X-Signature`.
 - Signature format follows Love Envoy server verification:
-  `HMAC_SHA256("{timestamp}.{METHOD}.{path_with_query}.{sha256(body)}")`
+  `HMAC_SHA256("{timestamp}.{METHOD}.{path_with_query}.{sha256(body)}.{nonce}")`
 - Transport currently uses Python stdlib (`urllib`) to keep dependencies minimal.

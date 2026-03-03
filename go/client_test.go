@@ -8,16 +8,17 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestBuildSignaturePayloadMatchesServerContract(t *testing.T) {
-	payload := BuildSignaturePayload("1700000000", "post", "/api/v1/discover?page=1", "{\"x\":1}")
-	if payload != "1700000000.POST./api/v1/discover?page=1.5041bf1f713df204784353e82f6a4a535931cb64f1f4b4a5aeaffcb720918b22" {
+	payload := BuildSignaturePayload("1700000000", "post", "/api/v1/discover?page=1", "{\"x\":1}", "nonce-123")
+	if payload != "1700000000.POST./api/v1/discover?page=1.5041bf1f713df204784353e82f6a4a535931cb64f1f4b4a5aeaffcb720918b22.nonce-123" {
 		t.Fatalf("unexpected payload: %s", payload)
 	}
 
 	sig := Sign(payload, "secret")
-	if sig != "91cabb616cba2f5c780d8d3f08569bfefd26380639d41ebc3a38a1745fec4016" {
+	if sig != "0bdf2e80f4c7d4c8f11b7ad5202eb909a1400223c16fe0514ce9a103edb13c7a" {
 		t.Fatalf("unexpected signature: %s", sig)
 	}
 }
@@ -76,6 +77,19 @@ func TestProtectedEndpointRequiresCredentials(t *testing.T) {
 	}
 }
 
+func TestIsTimestampFresh(t *testing.T) {
+	now := time.Unix(1700000010, 0)
+	if !IsTimestampFresh("1700000005", now, 10*time.Second) {
+		t.Fatal("expected timestamp to be fresh")
+	}
+	if IsTimestampFresh("1700000000", now, 5*time.Second) {
+		t.Fatal("expected timestamp to be stale")
+	}
+	if IsTimestampFresh("invalid", now, 5*time.Second) {
+		t.Fatal("expected invalid timestamp to be rejected")
+	}
+}
+
 func TestDiscoverIncludesQueryAndAuthHeaders(t *testing.T) {
 	t.Parallel()
 
@@ -97,6 +111,9 @@ func TestDiscoverIncludesQueryAndAuthHeaders(t *testing.T) {
 		}
 		if r.Header.Get("X-Signature") == "" {
 			t.Fatal("missing X-Signature")
+		}
+		if r.Header.Get("X-Nonce") == "" {
+			t.Fatal("missing X-Nonce")
 		}
 
 		w.Header().Set("Content-Type", "application/json")

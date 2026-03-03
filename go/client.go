@@ -168,13 +168,14 @@ func (c *Client) doJSON(
 		if c.apiKey == "" || c.hmacSecret == "" {
 			return ErrMissingCredentials
 		}
-		timestamp := strconv.FormatInt(time.Now().Unix(), 10)
-		signaturePayload := BuildSignaturePayload(timestamp, method, canonicalPath, body)
-		signature := Sign(signaturePayload, c.hmacSecret)
 
-		req.Header.Set("X-API-Key", c.apiKey)
-		req.Header.Set("X-Timestamp", timestamp)
-		req.Header.Set("X-Signature", signature)
+		headers, err := SignedHeaders(c.apiKey, c.hmacSecret, method, canonicalPath, body, "", "")
+		if err != nil {
+			return err
+		}
+		for key, value := range headers {
+			req.Header.Set(key, value)
+		}
 	}
 
 	resp, err := c.httpClient.Do(req)

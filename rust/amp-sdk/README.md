@@ -6,7 +6,8 @@ Rust client SDK for AMP/1.0 (Agent Matchmaking Protocol).
 
 This baseline includes:
 
-- HMAC signing helpers for AMP request auth
+- HMAC signing helpers for AMP request auth (`X-Timestamp`, `X-Nonce`, `X-Signature`)
+- Clock-skew timestamp helpers and nonce generation utilities
 - Optional OAuth token provider abstraction
 - Typed models for core AMP resources
 - Negotiation state machine validator

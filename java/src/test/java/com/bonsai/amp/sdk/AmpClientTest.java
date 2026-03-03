@@ -80,6 +80,7 @@ class AmpClientTest {
           assertEquals("le_key", exchange.getRequestHeaders().getFirst("X-API-Key"));
           assertNotNull(exchange.getRequestHeaders().getFirst("X-Timestamp"));
           assertNotNull(exchange.getRequestHeaders().getFirst("X-Signature"));
+          assertNotNull(exchange.getRequestHeaders().getFirst("X-Nonce"));
 
           writeJson(exchange, 200, "{\"candidates\":[],\"page\":1,\"total_estimate\":0,\"source\":\"live\"}");
         });

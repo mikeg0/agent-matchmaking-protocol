@@ -1,6 +1,6 @@
 # AMP/1.0 SDK — ACTION_PLAN
 
-_Last updated: 2026-03-03 (UTC, run 5)_
+_Last updated: 2026-03-03 (UTC, run 6)_
 
 ## Review Scope (this run)
 - Repo structure and implementation completeness for Python, Go, Rust, Java
@@ -17,6 +17,7 @@ _Last updated: 2026-03-03 (UTC, run 5)_
   - `java/` baseline client + models + auth + unit tests
 - ✅ Shared conformance fixture set now exists under `spec/fixtures/` (HTTP payload fixtures + canonical state transition cases)
 - ✅ Fixture-driven conformance tests are wired in all 4 SDK targets (`python/tests`, `go/`, `rust/amp-sdk/tests`, `java/src/test`)
+- ✅ Auth helper contract is now aligned across Python/Go/Rust/Java (`X-API-Key`, `X-Timestamp`, `X-Nonce`, `X-Signature`) with canonical payload parity + clock-skew timestamp helpers
 - ⚠️ No CI matrix for multi-language validation yet
 - ⚠️ Host currently lacks toolchains (`go`, `cargo`, `mvn`, `javac`) for full local verification
 
@@ -39,10 +40,11 @@ _Last updated: 2026-03-03 (UTC, run 5)_
   - Added fixture-driven conformance test suites for Python, Go, Rust, and Java SDKs
 
 ### P1 — Security + Reliability
-- [ ] **Implement consistent auth helpers across SDKs**
-  - HMAC signer with canonical payload builder
-  - Replay-safe timestamp helpers and clock-skew handling
-  - Optional OAuth2 token provider interface (where applicable)
+- [x] **Implement consistent auth helpers across SDKs**
+  - Standardized canonical HMAC payload across all 4 SDKs: `{timestamp}.{METHOD}.{path}.{sha256(body)}.{nonce}`
+  - Added replay-safe nonce generation + automatic `X-Nonce` header emission for authenticated requests in Python/Go/Rust/Java clients
+  - Added shared timestamp helper utilities for unix-second generation and clock-skew freshness checks in each SDK
+  - Preserved/extended OAuth2 token provider abstraction in Rust (`TokenProvider` + `OAuthTokenManager`) as the optional interface where currently applicable
 
 - [ ] **Add retries, timeouts, and idempotency hooks**
   - Sensible defaults (exponential backoff, 429/5xx retry policy)

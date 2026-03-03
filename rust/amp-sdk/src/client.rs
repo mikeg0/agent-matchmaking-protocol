@@ -1,6 +1,5 @@
 use std::{sync::Arc, time::Duration};
 
-use chrono::Utc;
 use reqwest::{
     header::{AUTHORIZATION, CONTENT_TYPE},
     Method, Url,
@@ -411,17 +410,20 @@ impl AmpClient {
                 _ => return Err(AmpError::MissingCredentials),
             };
 
-            let timestamp = Utc::now().timestamp().to_string();
-            let signature = signer.sign(
+            let timestamp = HmacSigner::unix_timestamp_now();
+            let nonce = HmacSigner::generate_nonce();
+            let signature = signer.sign_with_nonce(
                 &timestamp,
                 method.as_str(),
                 &canonical_path,
                 body_json.as_deref().unwrap_or(""),
+                &nonce,
             );
 
             req = req
                  .header("X-API-Key", api_key.as_str())
                 .header("X-Timestamp", timestamp)
+                .header("X-Nonce", nonce)
                 .header("X-Signature", signature);
 
             if let Some(tokens) = &self.token_manager {

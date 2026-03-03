@@ -3,7 +3,12 @@ import unittest
 from unittest.mock import patch
 
 from amp_sdk import AmpClient, CredentialsError, CreateNegotiationRequest, RegisterAgentRequest
-from amp_sdk.auth import build_signature_payload, sign
+from amp_sdk.auth import (
+    build_signature_payload,
+    is_timestamp_fresh,
+    sign,
+    signed_headers,
+)
 
 
 class FakeHttpResponse:
@@ -22,15 +27,45 @@ class FakeHttpResponse:
 
 class AmpClientTests(unittest.TestCase):
     def test_signature_payload_matches_server_contract(self):
-        payload = build_signature_payload("1700000000", "post", "/api/v1/discover?page=1", "{\"x\":1}")
+        payload = build_signature_payload(
+            "1700000000",
+            "post",
+            "/api/v1/discover?page=1",
+            "{\"x\":1}",
+            "nonce-123",
+        )
         self.assertEqual(
             payload,
-            "1700000000.POST./api/v1/discover?page=1.5041bf1f713df204784353e82f6a4a535931cb64f1f4b4a5aeaffcb720918b22",
+            "1700000000.POST./api/v1/discover?page=1.5041bf1f713df204784353e82f6a4a535931cb64f1f4b4a5aeaffcb720918b22.nonce-123",
         )
         self.assertEqual(
             sign(payload, "secret"),
-            "91cabb616cba2f5c780d8d3f08569bfefd26380639d41ebc3a38a1745fec4016",
+            "0bdf2e80f4c7d4c8f11b7ad5202eb909a1400223c16fe0514ce9a103edb13c7a",
         )
+
+    def test_signed_headers_include_nonce(self):
+        headers = signed_headers(
+            api_key="le_key",
+            hmac_secret="secret",
+            method="GET",
+            path_with_query="/api/v1/discover?page=1",
+            body="",
+            timestamp="1700000000",
+            nonce="nonce-123",
+        )
+
+        self.assertEqual(headers["X-API-Key"], "le_key")
+        self.assertEqual(headers["X-Timestamp"], "1700000000")
+        self.assertEqual(headers["X-Nonce"], "nonce-123")
+        self.assertEqual(
+            headers["X-Signature"],
+            "e518b4f21b0868e2ef11b6d5e3127e825d0e5b940bcbcae9be2d83b703248a66",
+        )
+
+    def test_timestamp_freshness_helper(self):
+        self.assertTrue(is_timestamp_fresh("1700000000", now=1700000005, max_skew_seconds=10))
+        self.assertFalse(is_timestamp_fresh("1700000000", now=1700000101, max_skew_seconds=10))
+        self.assertFalse(is_timestamp_fresh("invalid", now=1700000000, max_skew_seconds=10))
 
     @patch("amp_sdk.client.urlopen")
     def test_register_agent_round_trip(self, mock_urlopen):

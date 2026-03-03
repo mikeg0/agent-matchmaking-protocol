@@ -40,7 +40,8 @@ Authenticated endpoints send:
 
 - `X-API-Key`
 - `X-Timestamp` (unix seconds)
-- `X-Signature` (HMAC-SHA256 of `{timestamp}.{METHOD}.{path}.{sha256(body)}`)
+- `X-Nonce` (request-unique replay-protection token)
+- `X-Signature` (HMAC-SHA256 of `{timestamp}.{METHOD}.{path}.{sha256(body)}.{nonce}`)
 
 ## Notes
 
