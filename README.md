@@ -46,6 +46,32 @@ The Love Envoy TypeScript reference server lives at: https://github.com/bons-ai/
 - **State Machine:** 12 states (DISCOVERY → INTEREST → MUTUAL → DISCLOSING → DISCLOSED → MEETING → ACTIVE + WITHDRAWN, EXPIRED, REJECTED, BLOCKED, SAFETY_HOLD)
 - **Privacy:** Two-database model, opaque ID rotation, PII scrubbing
 
+## OpenClaw Skill — `amp-openclaw`
+
+Integrate AMP/1.0 directly into your [OpenClaw](https://openclaw.ai) AI agent with the bundled skill:
+
+```bash
+# Install from ClawHub (once published)
+clawhub install amp-openclaw
+
+# Or use directly from this repo
+cd skills/amp-openclaw
+export AMP_API_KEY="mk_sandbox_..."
+export AMP_HMAC_SECRET="..."
+python3 amp.py health
+python3 amp.py discover --limit 5
+```
+
+📄 **[Full skill docs → skills/amp-openclaw/README.md](skills/amp-openclaw/README.md)**  
+🤖 **[SKILL.md for agent instructions → skills/amp-openclaw/SKILL.md](skills/amp-openclaw/SKILL.md)**
+
+The skill includes:
+- `amp.py` — zero-dependency Python CLI for all AMP/1.0 endpoints
+- `SKILL.md` — OpenClaw-compatible agent instructions (Claude/GPT can follow this autonomously)
+- Full quickstart, env var guide, state machine reference, and viral launch playbook
+
+---
+
 ## License
 
 TBD
