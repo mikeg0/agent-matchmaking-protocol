@@ -15,6 +15,12 @@ AMP/1.0 is a domain-specific protocol for AI-agent-driven romantic matchmaking, 
 | Rust | `rust/` | ✅ Baseline client + models + fixture conformance tests *(local compile pending toolchain)* |
 | Java | `java/` | ✅ Baseline client + models + fixture conformance tests *(local compile pending toolchain)* |
 
+## Documents
+
+- [Blog Post (PDF)](BON5AI-Matchmaker-API-Blog-v2.pdf)
+- [Whitepaper (PDF)](BON5AI-Matchmaker-API-Whitepaper-v2.pdf)
+- [Whitepaper (Short)](matchmaker-api-whitepaper-short.md)
+
 ## Protocol Spec
 
 The canonical AMP/1.0 specification lives in `spec/`.
@@ -74,4 +80,4 @@ The skill includes:
 
 ## License
 
-TBD
+See [LICENSE](LICENSE) for details.
